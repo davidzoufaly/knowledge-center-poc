@@ -1,8 +1,35 @@
 import React, { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import test from "./test.md";
-// styling can be done via pseudoselctors
+// styling can be done via pseudoselectors OR attribute selection
 import "./App.css";
+
+const findAllH3UnderH2 = () => {
+  const arr = Array.from(document.querySelector("main").childNodes);
+  let lastAvH2Index = null;
+  let countOfH2 = 0;
+  let countOfH3 = 0;
+
+  return arr.reduce((acc, val, i) => {
+    if (val.nodeName === "H2") {
+      countOfH2++;
+      val.id = `h3-${countOfH2}`;
+      lastAvH2Index = i;
+      acc[i] = { mainTitle: val, secondTitles: [] };
+    }
+
+    if (val.nodeName === "H3") {
+      countOfH3++;
+      val.id = `h3-${countOfH3}`;
+      acc[lastAvH2Index] = {
+        ...acc[lastAvH2Index],
+        secondTitles: [...acc[lastAvH2Index].secondTitles, val],
+      };
+    }
+
+    return acc;
+  }, []);
+};
 
 function App() {
   const [mdFile, setMdFile] = useState();
@@ -17,26 +44,27 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const menuItemsArray = Array.from(document.querySelectorAll("h2"));
-    setMenuItems(menuItemsArray);
-    // assign id as anchor for menu link
-    menuItemsArray.forEach((item, i) => (item.id = `h2-${i}`));
+    setMenuItems(findAllH3UnderH2());
+    console.log(Object.values(findAllH3UnderH2()));
   }, [mdFile]);
 
   // Id and link should be contained from h2 innerText -> we can use our stringMethods for transforming to correct notation
   const menu = (
     <ul>
-      {menuItems.map((item, index) => (
-        <li key={item.innerText}>
-          <a href={`#h2-${index}`}>{item.innerText}</a>
+      {Object.values(menuItems).map((item, index) => (
+        <li key={item.mainTitle.innerText}>
+          <a href={`#h2-${index}`}>{item.mainTitle.innerText}</a>
+          <ul>
+            {item.secondTitles.map((secondItem) => (
+              <li>
+                <a href={`#h3-${index}`}>{secondItem.innerText}</a>
+              </li>
+            ))}
+          </ul>
         </li>
       ))}
     </ul>
   );
-
-  useEffect(() => {
-    console.log("mdFile: ", mdFile);
-  }, [mdFile]);
 
   return (
     <>
@@ -44,8 +72,8 @@ function App() {
         <p>menu</p>
         {menu}
       </nav>
+      <p>content</p>
       <main>
-        <p>content</p>
         <ReactMarkdown children={mdFile} />
       </main>
     </>

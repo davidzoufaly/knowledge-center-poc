@@ -8,6 +8,8 @@
 ## another section
 ### heading 3
 text
+### another h3 after same h2
+fafa
 
 ## another section 2
 ### heading 3
