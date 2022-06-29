@@ -4,31 +4,32 @@ import test from "./test.md";
 // styling can be done via pseudoselectors OR attribute selection
 import "./App.css";
 
-const findAllH3UnderH2 = () => {
-  const arr = Array.from(document.querySelector("main").childNodes);
+const findAllH3UnderH2 = function () {
+  const nodeList = document.querySelector("main")?.childNodes;
+  const arr = nodeList ? Array.from(nodeList) : [];
   let lastAvH2Index = null;
   let countOfH2 = 0;
   let countOfH3 = 0;
+  return function () {
+    return arr.reduce((acc, val, i) => {
+      if (val.nodeName === "H2") {
+        val.id = `h2-${countOfH2}`;
+        lastAvH2Index = i;
+        acc[i] = { mainTitle: val, secondTitles: [] };
+        countOfH2++;
+      }
 
-  return arr.reduce((acc, val, i) => {
-    if (val.nodeName === "H2") {
-      countOfH2++;
-      val.id = `h3-${countOfH2}`;
-      lastAvH2Index = i;
-      acc[i] = { mainTitle: val, secondTitles: [] };
-    }
-
-    if (val.nodeName === "H3") {
-      countOfH3++;
-      val.id = `h3-${countOfH3}`;
-      acc[lastAvH2Index] = {
-        ...acc[lastAvH2Index],
-        secondTitles: [...acc[lastAvH2Index].secondTitles, val],
-      };
-    }
-
-    return acc;
-  }, []);
+      if (val.nodeName === "H3") {
+        val.id = `h3-${countOfH3}`;
+        acc[lastAvH2Index] = {
+          ...acc[lastAvH2Index],
+          secondTitles: [...acc[lastAvH2Index].secondTitles, val],
+        };
+        countOfH3++;
+      }
+      return acc;
+    }, []).filter(Boolean)
+  };
 };
 
 function App() {
@@ -44,20 +45,19 @@ function App() {
   }, []);
 
   useEffect(() => {
-    setMenuItems(findAllH3UnderH2());
-    console.log(Object.values(findAllH3UnderH2()));
+    setMenuItems(findAllH3UnderH2()());
   }, [mdFile]);
 
   // Id and link should be contained from h2 innerText -> we can use our stringMethods for transforming to correct notation
   const menu = (
     <ul>
       {Object.values(menuItems).map((item, index) => (
-        <li key={item.mainTitle.innerText}>
+        <li key={item.mainTitle.id}>
           <a href={`#h2-${index}`}>{item.mainTitle.innerText}</a>
           <ul>
             {item.secondTitles.map((secondItem) => (
-              <li>
-                <a href={`#h3-${index}`}>{secondItem.innerText}</a>
+              <li key={secondItem.id}>
+                <a href={`#${secondItem.id}`}>{secondItem.innerText}</a>
               </li>
             ))}
           </ul>
